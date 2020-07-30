@@ -597,17 +597,25 @@ class VPCConnection(EC2Connection):
 
         return self.associate_network_acl(default_acl_id, subnet_id)
 
-    def create_network_acl(self, vpc_id):
+    def create_network_acl(self, vpc_id, tags=None):
         """
         Creates a new network ACL.
 
         :type vpc_id: str
         :param vpc_id: The VPC ID to associate this network ACL with.
 
+        :type tags: list of dicts
+        :param tags to apply to created network ACL.
+
         :rtype: The newly created network ACL
         :return: A :class:`boto.vpc.networkacl.NetworkAcl` object
         """
         params = {'VpcId': vpc_id}
+        if tags:
+            params['TagSpecification.0.ResourceType'] = 'network-acl'
+            for tag_n, tag in enumerate(tags):
+                params['TagSpecification.0.Tag.{0}.Key'.format(tag_n)] = tag['key']
+                params['TagSpecification.0.Tag.{0}.Value'.format(tag_n)] = tag['value']
         return self.get_object('CreateNetworkAcl', params, NetworkAcl)
 
     def delete_network_acl(self, network_acl_id):
