@@ -396,7 +396,7 @@ class VPCConnection(EC2Connection):
     def create_route(self, route_table_id, destination_cidr_block,
                      gateway_id=None, instance_id=None, interface_id=None,
                      vpc_peering_connection_id=None,
-                     dry_run=False):
+                     dry_run=False, tags=None):
         """
         Creates a new route in the route table within a VPC. The route's target
         can be either a gateway attached to the VPC or a NAT instance in the
@@ -425,6 +425,9 @@ class VPCConnection(EC2Connection):
         :type dry_run: bool
         :param dry_run: Set to True if the operation should not actually run.
 
+        :type tags: list of dicts
+        :param tags to apply to created route table.
+
         :rtype: bool
         :return: True if successful
         """
@@ -443,7 +446,11 @@ class VPCConnection(EC2Connection):
             params['VpcPeeringConnectionId'] = vpc_peering_connection_id
         if dry_run:
             params['DryRun'] = 'true'
-
+        if tags:
+            params['TagSpecification.0.ResourceType'] = 'route-table'
+            for tag_n, tag in enumerate(tags):
+                params['TagSpecification.0.Tag.{0}.Key'.format(tag_n)] = tag['key']
+                params['TagSpecification.0.Tag.{0}.Value'.format(tag_n)] = tag['value']
         return self.get_status('CreateRoute', params)
 
     def replace_route(self, route_table_id, destination_cidr_block,
@@ -1342,10 +1349,10 @@ class VPCConnection(EC2Connection):
             params['DryRun'] = 'true'
 
         if tags:
-            params["TagSpecification.0.ResourceType"] = "dhcp-options"
+            params['TagSpecification.0.ResourceType'] = 'dhcp-options'
             for tag_n, tag in enumerate(tags):
-                params["TagSpecification.0.Tag.{0}.Key".format(tag_n)] = tag["key"]
-                params["TagSpecification.0.Tag.{0}.Value".format(tag_n)] = tag["value"]
+                params['TagSpecification.0.Tag.{0}.Key'.format(tag_n)] = tag['key']
+                params['TagSpecification.0.Tag.{0}.Value'.format(tag_n)] = tag['value']
 
         return self.get_object('CreateDhcpOptions', params, DhcpOptions)
 
