@@ -1268,7 +1268,7 @@ class VPCConnection(EC2Connection):
 
     def create_dhcp_options(self, domain_name=None, domain_name_servers=None,
                             ntp_servers=None, netbios_name_servers=None,
-                            netbios_node_type=None, dry_run=False):
+                            netbios_node_type=None, dry_run=False, tags=None):
         """
         Create a new DhcpOption
 
@@ -1299,6 +1299,9 @@ class VPCConnection(EC2Connection):
 
         :type dry_run: bool
         :param dry_run: Set to True if the operation should not actually run.
+
+        :type tags: list of dicts
+        :param tags to apply to created dhcp options
 
         :rtype: The newly created DhcpOption
         :return: A :class:`boto.vpc.customergateway.DhcpOption` object
@@ -1337,6 +1340,12 @@ class VPCConnection(EC2Connection):
                                         'netbios-node-type', netbios_node_type)
         if dry_run:
             params['DryRun'] = 'true'
+
+        if tags:
+            params["TagSpecification.0.ResourceType"] = "dhcp-options"
+            for tag_n, tag in enumerate(tags):
+                params["TagSpecification.0.Tag.{0}.Key".format(tag_n)] = tag["key"]
+                params["TagSpecification.0.Tag.{0}.Value".format(tag_n)] = tag["value"]
 
         return self.get_object('CreateDhcpOptions', params, DhcpOptions)
 
