@@ -110,7 +110,7 @@ class VPCConnection(EC2Connection):
         return self.get_list('DescribeVpcs', params, [('item', VPC)])
 
     def create_vpc(self, cidr_block, instance_tenancy=None, dry_run=False,
-                   description=None):
+                   description=None, tags=None):
         """
         Create a new Virtual Private Cloud.
 
@@ -127,6 +127,9 @@ class VPCConnection(EC2Connection):
         :type description: string
         :param description: Description of the VPC.
 
+        :type tags: list of dicts
+        :param tags to apply to created VPC.
+
         :rtype: The newly created VPC
         :return: A :class:`boto.vpc.vpc.VPC` object
         """
@@ -137,6 +140,11 @@ class VPCConnection(EC2Connection):
             params['DryRun'] = 'true'
         if description:
             params['Description'] = description
+        if tags:
+            params['TagSpecification.0.ResourceType'] = 'vpc'
+            for tag_n, tag in enumerate(tags):
+                params['TagSpecification.0.Tag.{0}.Key'.format(tag_n)] = tag['key']
+                params['TagSpecification.0.Tag.{0}.Value'.format(tag_n)] = tag['value']
         return self.get_object('CreateVpc', params, VPC)
 
     def delete_vpc(self, vpc_id, dry_run=False):
